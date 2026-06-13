@@ -1557,10 +1557,11 @@ def plugins_list():
 @app.command()
 def status():
     """Show nanobot status."""
-    from nanobot.config.loader import get_config_path, load_config
+    from nanobot.config.loader import get_config_path, load_config, resolve_config_env_vars
 
     config_path = get_config_path()
     config = load_config()
+    resolved_config = resolve_config_env_vars(config)
     workspace = config.workspace_path
 
     console.print(f"{__logo__} nanobot Status\n")
@@ -1576,7 +1577,7 @@ def status():
 
         # Check API keys from registry
         for spec in PROVIDERS:
-            p = getattr(config.providers, spec.name, None)
+            p = getattr(resolved_config.providers, spec.name, None)
             if p is None:
                 continue
             if spec.is_oauth:
