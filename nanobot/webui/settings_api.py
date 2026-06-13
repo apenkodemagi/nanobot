@@ -584,10 +584,16 @@ def _image_generation_provider_rows(config: Any) -> list[dict[str, Any]]:
     for name in image_gen_provider_names():
         spec = find_by_name(name)
         provider_config = getattr(config.providers, name, None)
+        resolved_key = _resolve_env_placeholders(
+            getattr(provider_config, "api_key", None)
+        )
+        resolved_base = _resolve_env_placeholders(
+            getattr(provider_config, "api_base", None)
+        )
         configured = (
             _provider_configured_for_settings(spec, provider_config)
             if spec is not None and provider_config is not None
-            else bool(getattr(provider_config, "api_key", None))
+            else bool(resolved_key)
         )
         rows.append(
             {
@@ -595,10 +601,8 @@ def _image_generation_provider_rows(config: Any) -> list[dict[str, Any]]:
                 "label": spec.label if spec is not None else name,
                 "configured": configured,
                 "auth_type": "oauth" if spec is not None and spec.is_oauth else "api_key",
-                "api_key_hint": _mask_secret_hint(
-                    getattr(provider_config, "api_key", None)
-                ),
-                "api_base": getattr(provider_config, "api_base", None),
+                "api_key_hint": _mask_secret_hint(resolved_key),
+                "api_base": resolved_base,
                 "default_api_base": (
                     spec.default_api_base if spec and spec.default_api_base else None
                 ),
@@ -646,12 +650,18 @@ def _transcription_provider_rows(config: Any) -> list[dict[str, Any]]:
     for name in transcription_provider_names():
         spec = find_by_name(name)
         provider_config = getattr(config.providers, name, None)
+        resolved_key = _resolve_env_placeholders(
+            getattr(provider_config, "api_key", None)
+        )
+        resolved_base = _resolve_env_placeholders(
+            getattr(provider_config, "api_base", None)
+        )
         rows.append({
             "name": name,
             "label": spec.label if spec is not None else name,
-            "configured": bool(getattr(provider_config, "api_key", None)),
-            "api_key_hint": _mask_secret_hint(getattr(provider_config, "api_key", None)),
-            "api_base": getattr(provider_config, "api_base", None),
+            "configured": bool(resolved_key),
+            "api_key_hint": _mask_secret_hint(resolved_key),
+            "api_base": resolved_base,
             "default_api_base": spec.default_api_base if spec and spec.default_api_base else None,
         })
     return rows
@@ -762,7 +772,7 @@ def settings_payload(
             "model": effective_preset.model,
             "provider": selected_provider,
             "resolved_provider": provider_name,
-            "has_api_key": bool(provider and provider.api_key),
+            "has_api_key": bool(provider and _resolve_env_placeholders(provider.api_key)),
             "model_preset": active_preset_name,
             "max_tokens": effective_preset.max_tokens,
             "context_window_tokens": effective_preset.context_window_tokens,
@@ -777,8 +787,8 @@ def settings_payload(
         "providers": providers,
         "web_search": {
             "provider": search_provider,
-            "api_key_hint": _mask_secret_hint(search_config.api_key),
-            "base_url": search_config.base_url or None,
+            "api_key_hint": _mask_secret_hint(_resolve_env_placeholders(search_config.api_key)),
+            "base_url": _resolve_env_placeholders(search_config.base_url) or None,
             "max_results": search_config.max_results,
             "timeout": search_config.timeout,
             "providers": list(_WEB_SEARCH_PROVIDER_OPTIONS),

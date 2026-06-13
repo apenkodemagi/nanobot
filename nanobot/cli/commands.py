@@ -2315,6 +2315,8 @@ def status(
     """Show nanobot status."""
     config_path, loaded = _load_inspection_config(config=config, workspace=workspace)
     workspace_path = loaded.workspace_path
+    from nanobot.config.loader import resolve_config_env_vars
+    resolved_config = resolve_config_env_vars(loaded)
 
     console.print(f"{__logo__} nanobot Status\n")
 
@@ -2332,7 +2334,7 @@ def status(
 
         # Check API keys from registry
         for spec in PROVIDERS:
-            p = getattr(loaded.providers, spec.name, None)
+            p = getattr(resolved_config.providers, spec.name, None)
             if p is None:
                 continue
             if spec.is_oauth:
