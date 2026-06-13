@@ -23,7 +23,7 @@ from nanobot.audio.transcription_registry import (
 )
 from nanobot.audio.tts import resolve_tts_config
 from nanobot.audio.tts_registry import resolve_tts_provider, tts_provider_names
-from nanobot.config.loader import get_config_path, load_config, save_config
+from nanobot.config.loader import get_config_path, load_config, resolve_config_env_vars, save_config
 from nanobot.config.schema import ModelPresetConfig, ProviderConfig
 from nanobot.providers.image_generation import (
     get_image_gen_provider,
@@ -696,7 +696,7 @@ def settings_payload(
     restart_required_sections: list[str] | None = None,
     apply_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     defaults = config.agents.defaults
     active_preset_name = defaults.model_preset or "default"
     try:
@@ -899,12 +899,12 @@ def settings_payload(
 
 def settings_usage_payload() -> dict[str, Any]:
     """Return the lightweight token usage slice for Overview refreshes."""
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     return token_usage_payload(timezone_name=config.agents.defaults.timezone)
 
 
 def update_agent_settings(query: QueryParams) -> dict[str, Any]:
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     defaults = config.agents.defaults
     changed = False
     restart_required = False
