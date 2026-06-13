@@ -675,7 +675,7 @@ def settings_payload(
     restart_required_sections: list[str] | None = None,
     apply_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     defaults = config.agents.defaults
     active_preset_name = defaults.model_preset or "default"
     try:
@@ -872,12 +872,12 @@ def settings_payload(
 
 def settings_usage_payload() -> dict[str, Any]:
     """Return the lightweight token usage slice for Overview refreshes."""
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     return token_usage_payload(timezone_name=config.agents.defaults.timezone)
 
 
 def update_agent_settings(query: QueryParams) -> dict[str, Any]:
-    config = load_config()
+    config = resolve_config_env_vars(load_config())
     defaults = config.agents.defaults
     changed = False
     restart_required = False
